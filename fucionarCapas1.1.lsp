@@ -45,19 +45,86 @@
   )
 )
  
+ (defun filterNameLayer ()
+    (setq lis (GetTblLayer))
+    (setq lisName '())
+    (setq lisNameWithoutPrefix '())
+    (setq listAllLayerGroup '())
+    (setq layerGroupByLayerName '())
+   ;; captura tods los nomre de los layer 
+    (foreach item lis
+      (setq name (cdr (assoc 2 item )))
+      (setq lisName (append lisName (list name)))
+      
+    )
+    (if (> (length lisName) 0)
+      ;; capturara nombre sim prefijos caracter clave $
+      (progn
+        (foreach name1 lisName 
+          (setq position (PositionChar name1 "$"))
+          (if position
+            (setq name1 (substr name1 position ))
+          )
+          (setq lisNameWithoutPrefix (append lisNameWithoutPrefix (list name1)))
+
+        )
+        
+        (princ (length lisNameWithoutPrefix))
+        (print)
+        (setq lisNameWithoutPrefix(removeDuplicates lisNameWithoutPrefix))
+        (print)
+        (princ (length lisNameWithoutPrefix))
+        (print)
+      )
+    )
+   (imp lisNameWithoutPrefix)
+ )   
+
+;; retorna la posiscion de un caracter espesifico en una cadena de texto
+(defun PositionChar(str char / i encontrado charI)
+  (setq i (strlen str)  )
+  (setq encontrado nil)
+  (while (and (> i 0 ) ( not encontrado ))
+    (setq charI (substr str i 1))
+    (if(= char charI)
+        (setq encontrado T)
+        (setq i (1- i))
+    )
+  )
+  (if( not encontrado  )
+    nil
+    (1+ i)
+  )
+)
+
+;; quita duplicados de una lista 
+(defun removeDuplicates ( lis / newList item )
+  (setq newList '())
+  
+      (foreach item lis
+        (if (not (member item newList)); si no encuentra el elemnto en la nueva lista 
+          (setq newList (append newList (list item)))
+        )
+      )
     
-
-
-
-
+  
+   newList
+)
+  
+      
+  
+    
+   
+  
 
 (DEFUN imp(lis / i)
-(FOREACH i lis
-(PRINT i)
-  (PRINC)
+  (FOREACH i lis
+   (PRINT i)
+   (PRINC)
+  )
+)
 
-)
-)
+
 
 
 
