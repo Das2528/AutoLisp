@@ -1,49 +1,77 @@
 
-
+;; obtiene la lista de todos los layes 
 (DEFUN GetTblLayer (/ layer lisLay)
   (SETQ layer (TBLNEXT "LAYER" T));; en este caso la T indica q iniciara desde el primer registro 
   (SETQ lisLay '())
+
+  (print "-------------------------------------")
+  (print "obteniendo lista de layers..  ")
   (while layer 
-    (SETQ lisLay (APPEND lisLay (LIST layer)))
+
+    (setq idlayer(tblobjname "LAYER" (cdr (assoc 2 layer))))
+    (setq entLayer (entget idLayer))
+    (SETQ lisLay (APPEND lisLay (LIST entLayer)))
     (SETQ layer (TBLNEXT "LAYER" ))
   )
+  
+  
+  (print "...operacion completada")
+  (print  (strcat "Total de layer encontrados: " (itoa (length lisLay))))
+  (print "-------------------------------------")
+  (print)
   lisLay
 ) 
-
-(DEFUN ActivateLayer(/ item lis name idLayer layer estado color)
+;; filtra solo las capas bloqueadas apagadas o congeladas 
+(defun GetLayerLookOf( / lis LisLayerLookOf item )
   (setq lis (GetTblLayer))
-  (FOREACH item lis
-    (print (setq name (cdr (assoc 2 item)))); nombre del layer 
-    (if (equal "0" name)
-      (progn ; si  
-        (command "-LAYER" "SET" "0" "") ; cambia a alayer 0 como el activo 
-      )
-      (progn ;si no 
-        ;(print item)
-        (setq idLayer (tblobjname "LAYER" name)); id del layer 
-        (setq layer (entget idLayer )); opteniendo la enntidad 
-        (setq estado (cdr (assoc 70 layer)))
-        (setq color (cdr (assoc 62 layer)))
-        (if(/= estado  0 )        
-          (progn
-            (setq layer (subst (cons 70 0) (assoc 70 layer) layer ))
-            (entmod layer )
-            (entupd idLayer)
-          )         
-        )
-        (if(< color 0)
-          (progn 
-            (setq color (* -1 color))
-            (setq layer (subst (cons 62 color) (assoc 62 layer) layer ))
-            (entmod layer )
-            (entupd idLayer)
-            (princ)
-          )
-        )
-      )    
+  (print "-------------------------------------")
+  (print "Buscando layers bloqueados  apagados o congelados ...  ")
+  (setq LisLayerLookOf '())
+  (foreach item lis    
+    (if (or (< (cdr (assoc 62 item)) 0) (/= (cdr (assoc 70 item)) 0 ))
+      (setq LisLayerLookOf (append LisLayerLookOf (list item )))
     )
   )
+  
+  (print "...operacion completada")
+  (print  (strcat "Total de layer encontrados: " (itoa (length LisLayerLookOf))))
+  (print "-------------------------------------")
+  (print)
+  LisLayerLookOf
 )
+
+
+; activa los estados de los layer 
+(DEFUN ActivateLayer(/ item lis name color)
+  (setq lis (GetLayerLookOf))
+  (print "-------------------------------------")
+  (print "activando layer ...  ")
+  (FOREACH item lis
+    (setq color (cdr (assoc 62 item)))
+    (if(/= (cdr (assoc 70 item)) 0 )        
+      (setq item (subst (cons 70 0) (assoc 70 item) item ))
+    )
+    (if(< color 0)
+      (progn 
+        (setq color (* -1 color))
+        (setq item (subst (cons 62 color) (assoc 62 item) item ))                                 
+      )
+    )
+    (setq name (cdr (assoc 2 item))); nombre del layer 
+    (if (equal "0" name)   
+      (command "-LAYER" "SET" "0" "") ; cambia a alayer 0 como el activo 
+    )
+    (entmod item )  
+  )    
+  (print "...operacion completada")
+  (print  (strcat "Total de layer activados: " (itoa (length lis))))
+  (print "-------------------------------------")
+  (print)
+)
+      
+                  
+ 
+
  
  (defun filterNameLayer ()
     (setq lis (GetTblLayer))
@@ -126,6 +154,17 @@
 
 
 
+
+
+
+;;; funcion para medir velocidad 
+(defun testVelocidad ()
+  (setq startTime (getvar "DATE"))
+  (ActivateLayer)
+  (setq endTime (getvar "DATE"))
+  (setq elapsedTime (* (- endTime startTime) 86400.0)) ; Convierte de días a segundos
+  (print (strcat "Tiempo de ejecución: " (rtos elapsedTime 2 6) " segundos"))
+)
 
 
 
